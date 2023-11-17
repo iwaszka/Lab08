@@ -20,7 +20,7 @@ weather <- read.csv("data/weatherAUS.csv", header = TRUE)
 We will start by transform any character variables that need to be transformed into categorical. Use the following code to identify them and trasform them into factors.
 
 ```{r mutate-char}
-weather %>% 
+variables_to_transform = weather %>% 
   select(where(is.character),-Date) %>% names()
 weather <- weather %>% 
   mutate_at(vars(all_of(variables_to_transform)),factor)
@@ -46,13 +46,18 @@ weather %>%
 1. Are there any missing values in our variable of interest `RainTomorrow`? If so, we filter them out and save the new dataset as `weather_noNA`. 
 
 ```{r}
-
+weather_noNA <- weather %>%
+  filter(!is.na(RainTomorrow))
 ```
 
 2. Which cities are the ones with more rain days? To do this, let's analyze the `RainToday` variable. 
 
 ```{r}
+weather %>% 
+  count(Location)
 
+weather %>% 
+  filter(Location == "Adelaide")
 ```
 
 # Exercise 2: Logistic regression
@@ -67,6 +72,14 @@ weather_Portland <- weather %>%
 1. Try to predict `RainTomorrow` by fitting a linear regression using the variable `RainToday` and print the output using `tidy()`.
 
 ```{r}
+weather_Portland_numeric <- weather_Portland %>%
+  mutate(RainToday = ifelse(RainToday == "Yes", 1, 0),
+         RainTomorrow = ifelse(RainTomorrow == "Yes", 1, 0)) 
+
+linear_reg() %>%
+  set_engine("lm") %>%
+  fit(RainTomorrow ~ RainToday, data = weather_Portland_numeric) %>%
+  tidy()
 
 ```
 
@@ -75,7 +88,9 @@ weather_Portland <- weather %>%
 - Plot them using an appropriate visualization. What is peculiar about them?
 
 ```{r}
-
+ggplot(data = weather_Portland_numeric, aes(x = RainToday, y = RainTomorrow)) +
+  geom_point() +
+  geom_smooth(method = "glm")
 ```
 
 > Hint: how many unique values do the predicted probabilities take? What do these value correspond to?
@@ -85,7 +100,7 @@ weather_Portland <- weather %>%
 - Are there any missing values? Why?
 
 ```{r}
-
+summary(weather_Portland_numeric)
 ```
 
 *Add your answer here*
@@ -101,7 +116,9 @@ set.seed(111723)
 1. Split the data into a training set (80% of your Portland data) and a testing set.
 
 ```{r}
-
+weather_split <- initial_split(weather_Portland, prop = 0.80)
+train_data <- training(weather_split)
+test_data  <- testing(weather_split)
 ```
 
 2. Refit the simple logistic regression using `RainToday` as predictor on this training data, using `tidymodels` recipes and workflows.
@@ -122,11 +139,11 @@ weather_rec1 <- recipe(
 
 ```{r workflow1, eval = FALSE}
 # remove eval=FALSE
-weather_mod1 <- ___ %>% 
-  set_engine(___)
+weather_mod1 <- logistic_reg() %>% 
+  set_engine("glm")
 weather_wflow1 <- workflow() %>% # initiate workflow
-  ___(___) %>%                   # add model
-  ___(___)                       # add recipe
+  add_model(weather_mod1) %>%                   # add model
+  add_recipe(weather_rec1)                       # add recipe
 ```
 
 - Now fit your model on the training data
@@ -134,7 +151,7 @@ weather_wflow1 <- workflow() %>% # initiate workflow
 ```{r fit1, eval = FALSE}
 # remove eval=FALSE
 weather_fit1 <- weather_wflow1 %>% 
-  fit(data = ___)
+  fit(data = )
 tidy(weather_fit1)
 ```
 
