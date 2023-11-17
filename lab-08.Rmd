@@ -151,7 +151,7 @@ weather_wflow1 <- workflow() %>% # initiate workflow
 ```{r fit1, eval = FALSE}
 # remove eval=FALSE
 weather_fit1 <- weather_wflow1 %>% 
-  fit(data = )
+  fit(data = train_data)
 tidy(weather_fit1)
 ```
 
